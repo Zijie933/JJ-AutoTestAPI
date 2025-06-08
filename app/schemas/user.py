@@ -1,19 +1,27 @@
-from typing import Optional
+import uuid
+from datetime import datetime
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import Field, EmailStr
+from sqlmodel import SQLModel
 
 
-class UserBase(BaseModel):
-    # user_id: Optional[str]
-    username: str = Field(..., min_length=1, max_length=12, description="用户名")
-    password: Optional[str] = Field("123456", min_length=6, max_length=18, description="密码")
-    email: Optional[EmailStr] = Field(None, description="邮箱")
+class UserBase(SQLModel):
+    username: str = Field(..., min_length=1, max_length=12)
 
 class UserCreate(UserBase):
-    pass
+    password: str = Field("123456", min_length=6, max_length=22)
+
+class UserLogin(UserBase):
+    password: str = Field(..., min_length=6, max_length=22)
 
 class UserOut(UserBase):
-    id: int
+    id: uuid.UUID
+    name: str | None
+    email: EmailStr | None
+    create_time: datetime
 
-    class Config:
-        orm_mode = True
+class UserUpdate(UserBase):
+    name: str | None
+    email: EmailStr | None
+    password: str | None = Field(None, min_length=6, max_length=22)
+

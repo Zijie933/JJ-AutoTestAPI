@@ -9,6 +9,12 @@ class Settings(BaseSettings):
     APP_DESCRIPTION: str = "this is a simple demo~"
     APP_VERSION: str = "0.0.1"
     BASE_URL: str = "http://127.0.0.1:8100"
+    API_PREFIX: str = ""
+
+    WHITE_LIST: list[str] = [
+        "/user/login",
+        "/user/register",
+    ]
 
     SECRET_KEY: str = os.getenv("SECRET_KEY", "jack_default_key_1")
     ALGORITHM: str = "HS256"
