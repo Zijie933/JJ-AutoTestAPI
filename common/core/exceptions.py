@@ -35,7 +35,7 @@ class UsernameNotExistsException(AppBaseException):
     """
     用户名不存在
     """
-    def __init__(self, message: str = ErrorMessages.USER_ALREADY_EXIST):
+    def __init__(self, message: str = ErrorMessages.USER_NOT_EXIST):
         super().__init__(message)
 
 class PasswordIncorrectException(AppBaseException):
@@ -51,5 +51,6 @@ class TokenInvalidException(AppBaseException):
     """
     def __init__(self, message: str = ErrorMessages.TOKEN_INVALID):
         super().__init__(message)
+
 
 

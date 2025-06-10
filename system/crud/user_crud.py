@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from common.core.security import get_password_hash
 from common.models.user import User
-from app.schemas.user import UserCreate, UserUpdate
+from system.schemas.user_schemas import UserCreate, UserUpdate
 
 
 def get_user_by_id(db: Session, user_id: uuid.UUID) -> User | None:

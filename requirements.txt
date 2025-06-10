@@ -9,6 +9,9 @@ PyJWT
 python-dotenv>=1.0.1
 qrcode[pil]>=7.4.2
 passlib[bcrypt]
-uvicorn>=0.23.0,<1.0.0
+uvicorn
 asyncmy>=0.2.10
 loguru
+requests
+starlette
+httpx

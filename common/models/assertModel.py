@@ -1,7 +1,8 @@
-from enum import Enum
-from typing import Optional, Any
 
-from sqlmodel import SQLModel
+from enum import Enum
+from typing import Optional, Any, List
+
+from sqlmodel import SQLModel, Field
 
 class AssertCategory(str, Enum):
     """
@@ -48,4 +49,5 @@ class Assert(SQLModel):
     path: Optional[str] = None     # JSON路径，针对字段类断言
     expected: Optional[Any] = None # 预期值
     # expression: Optional[str] = None # 表达式
+
 

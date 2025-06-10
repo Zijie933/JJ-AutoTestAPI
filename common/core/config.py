@@ -14,6 +14,8 @@ class Settings(BaseSettings):
     WHITE_LIST: list[str] = [
         "/user/login",
         "/user/register",
+        "/docs",
+        "/openapi.json"
     ]
 
     SECRET_KEY: str = os.getenv("SECRET_KEY", "jack_default_key_1")

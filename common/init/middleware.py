@@ -30,9 +30,7 @@ def init_middleware(app: FastAPI):
 
             if payload:
                 exp = payload.get("exp")
-                logger.info(f"Token过期时间戳：{exp}")
                 if exp is None or exp < int(datetime.now(timezone.utc).timestamp()):
-                    logger.info("Token已过期或无过期时间，清理payload缓存")
                     payloadLocal.clear()
                     payload = None
 
@@ -43,8 +41,8 @@ def init_middleware(app: FastAPI):
                     logger.error("请求头中缺少Authorization，抛出Token无效异常")
                     raise TokenInvalidException(ErrorMessages.TOKEN_INVALID)
                 try:
+                    payloadLocal.clear()
                     payloadLocal.save_by_token(token)
-                    logger.info("成功保存Token到payload缓存")
                 except TokenInvalidException as e:
                     logger.error(f"Token无效异常，异常信息：{e}")
                     raise e

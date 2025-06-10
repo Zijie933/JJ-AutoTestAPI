@@ -1,3 +1,4 @@
+import json
 from typing import Any, Dict
 
 from common.models.api_test import ApiTestResponse
@@ -15,7 +16,7 @@ class AssertRunner:
             if assertion.category == AssertCategory.BODY_FIELD:
                 value = AssertRunner.extract_field(response.get_json_response(), assertion.path)
             elif assertion.category == AssertCategory.BODY_TEXT:
-                value = response.text
+                value = json.dumps(response.body, ensure_ascii=False)
             elif assertion.category == AssertCategory.STATUS_CODE:
                 value = response.status_code
             elif assertion.category == AssertCategory.RESPONSE_TIME:
@@ -64,6 +65,10 @@ class AssertRunner:
             elif operator == AssertOperator.NOT_CONTAINS:
                 assert isinstance(actual, (str, list, dict)), f"实际值类型 {type(actual)} 不支持不包含操作"
                 assert expected not in actual, f"断言失败: 路径[{path}] 期望不包含 '{expected}'，但实际包含"
+            elif operator == AssertOperator.EXISTS:
+                assert expected is None, f"断言失败: 路径[{path}] 期望存在 '{expected}'，但实际不存在"
+            elif operator == AssertOperator.NOT_EXISTS:
+                assert expected is not None, f"断言失败: 路径[{path}] 期望不存在 '{expected}'，但实际存在"
             # TODO 部分断言类型待完善...
             else:
                 return AssertResult(success=False, message=f"不支持的操作符: {operator}")

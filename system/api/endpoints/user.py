@@ -3,14 +3,15 @@ from datetime import timedelta
 
 from fastapi import APIRouter
 
-from app.api.deps import SessionDep
+from system.deps import SessionDep
 from common.core import security
 from common.core.PayloadLocal import payloadLocal
 from common.core.config import settings
-from common.core.exceptions import UsernameAlreadyExistsException, UsernameNotExistsException, PasswordIncorrectException
+from common.core.exceptions import UsernameAlreadyExistsException, UsernameNotExistsException, \
+    PasswordIncorrectException, TokenInvalidException
 from common.schemas.response import Response
-from app.schemas.user import UserCreate, UserOut, UserLogin, UserUpdate
-from app.crud import user as user_crud
+from system.schemas.user_schemas import UserCreate, UserOut, UserLogin, UserUpdate
+from system.crud import user_crud as user_crud
 
 router = APIRouter()
 
@@ -24,7 +25,7 @@ async def create_user(*, db: SessionDep, user_in: UserCreate):
     """
     user = user_crud.get_user_by_username(username=user_in.username, db=db)
     if user:
-        raise UsernameAlreadyExistsException(user_in.username)
+        raise UsernameAlreadyExistsException()
 
     user = user_crud.create_user(user=user_in, db=db)
     return Response.success(data=user)
@@ -37,7 +38,10 @@ async def get_user(*, db: SessionDep):
     :param db:
     :return:
     """
-    user_id = uuid.UUID(payloadLocal.payload.get("sub"))
+    payload = payloadLocal.payload
+    if not payload:
+        raise TokenInvalidException()
+    user_id = uuid.UUID(payload.get("sub"))
     user = user_crud.get_user_by_id(user_id=user_id, db=db)
     return Response.success(data=user)
 
@@ -53,7 +57,7 @@ async def login(*, db: SessionDep, user_in: UserLogin):
     user = user_crud.get_user_by_username(username=user_in.username, db=db)
 
     if not user:
-        raise UsernameNotExistsException(user_in.username)
+        raise UsernameNotExistsException()
 
     if not security.verify_password(password=user_in.password, hashed_password=user.password):
         raise PasswordIncorrectException()
@@ -64,7 +68,7 @@ async def login(*, db: SessionDep, user_in: UserLogin):
     return Response.success(data=token, message="登录成功")
 
 # 更新用户信息
-@router.put("", response_model=Response)
+@router.put("/", response_model=Response)
 def update_user(*, db: SessionDep, user_in: UserUpdate):
     """
     更新用户信息
@@ -74,7 +78,7 @@ def update_user(*, db: SessionDep, user_in: UserUpdate):
     """
     user = user_crud.update_user(db=db, user_in=user_in)
     if not user:
-        raise UsernameNotExistsException(user_in.username)
+        raise UsernameNotExistsException()
     return Response.success()
 
 
