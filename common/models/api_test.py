@@ -1,4 +1,5 @@
 import json
+from json import JSONDecodeError
 
 from pydantic import BaseModel
 from sqlmodel import SQLModel, Field
@@ -24,14 +25,14 @@ class ApiTestResponse(SQLModel):
     status_code: int = Field(-1, description="响应状态码")
     cookies: Dict[str, Any] = Field({}, description="响应 Cookie")
     headers: Dict[str, Any] = Field({}, description="响应 Header")
-    body: Dict[str, Any] = Field({}, description="响应 Body")
+    body: Any = Field(None, description="响应 Body")
 
     @staticmethod
-    def init(*, status_code: int, headers: dict, cookies: dict, body: str):
+    def init(*, status_code: int = None, headers: dict = None, cookies: dict = None, text: str = None):
         try:
-            body = json.loads(body)
-        except json.JSONDecodeError:
-            body = {}
+            body = json.loads(text)
+        except JSONDecodeError or TypeError:
+            body = text
         return ApiTestResponse(
             status_code=status_code,
             headers=headers,

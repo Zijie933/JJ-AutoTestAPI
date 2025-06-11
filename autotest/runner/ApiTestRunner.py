@@ -60,12 +60,15 @@ class ApiTestRunner:
             )
             response_obj: Response = await client.send(request_obj)
 
+            logger.info(response_obj.text)
+            logger.info(type(response_obj.text))
+
             # 将响应封装成 ApiTestResponse
             response_time_ms = response_obj.elapsed.total_seconds() * 1000
             result.response = ApiTestResponse.init(
                 status_code=response_obj.status_code,
-                body=response_obj.content.__str__(),
-                cookies=response_obj.cookies,
+                text=response_obj.text,
+                cookies=dict(response_obj.cookies),
                 headers=response_obj.headers,
             )
 
@@ -73,7 +76,8 @@ class ApiTestRunner:
                 res = AssertRunner.run_assert(assertion, result.response, response_time=response_time_ms)
                 result.assert_result.append(AssertResult(
                     message=res.message,
-                    success=res.success
+                    success=res.success,
+                    details=res.details
                 ))
 
             # 假如没有断言

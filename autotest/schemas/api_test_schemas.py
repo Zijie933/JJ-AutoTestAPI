@@ -47,6 +47,12 @@ class ApiTestCaseRunParams(SQLModel):
                     path="data.id",
                     expected=1,
                 ),
+                Assert(
+                    category=AssertCategory.BODY_FIELD,
+                    operator=AssertOperator.EQ,
+                    path="data[3].data_list[1]",
+                    expected=1,
+                ),
             ]
         ),
         Example(

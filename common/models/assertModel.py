@@ -33,13 +33,6 @@ class AssertOperator(str, Enum):
     STARTS_WITH = "starts_with"    # 字符串开头
     ENDS_WITH = "ends_with"        # 字符串结尾
 
-class AssertResult(SQLModel):
-    """
-    断言执行结果模型
-    """
-    success: bool                    # 断言是否成功
-    message: Optional[str] = None    # 失败时的详细信息
-
 class Assert(SQLModel):
     """
     断言模型
@@ -49,5 +42,15 @@ class Assert(SQLModel):
     path: Optional[str] = None     # JSON路径，针对字段类断言
     expected: Optional[Any] = None # 预期值
     # expression: Optional[str] = None # 表达式
+
+class AssertResult(SQLModel):
+    """
+    断言执行结果模型
+    """
+    success: bool
+    message: Optional[str] = None
+    details: Optional[Assert] = None
+
+
 
 
