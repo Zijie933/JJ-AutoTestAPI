@@ -1,7 +1,6 @@
 import json
 import re
-from operator import index
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from loguru import logger
 
@@ -12,7 +11,7 @@ from common.models.assertModel import Assert, AssertCategory, AssertOperator, As
 class AssertRunner:
 
     @staticmethod
-    def run_assert(assertion: Assert, response: ApiTestResponse, response_time: float = None) -> AssertResult:
+    def run_assert(*, assertion: Assert, response: ApiTestResponse, env: Dict[str, Any] = None) -> AssertResult:
         """
         根据断言条件和响应体进行断言检查
         """
@@ -24,27 +23,29 @@ class AssertRunner:
             elif assertion.category == AssertCategory.STATUS_CODE:
                 value = response.status_code
             elif assertion.category == AssertCategory.RESPONSE_TIME:
-                value = response_time
+                value = response.response_time
             elif assertion.category == AssertCategory.HEADER_FIELD:
-                value = response.get_header(assertion.path)
+                value = AssertRunner.extract_field(response.headers, assertion.path)
             elif assertion.category == AssertCategory.COOKIES_FIELD:
-                value = response.get_cookie(assertion.path)
+                value = AssertRunner.extract_field(response.cookies, assertion.path)
+            elif assertion.category == AssertCategory.ENV:
+                value = AssertRunner.extract_field(env, assertion.path)
             else:
                 return AssertResult(success=False, message=f"不支持的断言类别: {assertion.category}", details=assertion)
 
-            result = AssertRunner.compare_values(value, assertion.operator, assertion.expected, assertion.path)
+            result = AssertRunner.compare_values(value, assertion.operator, assertion.expected, assertion.path, env)
             result.message = f"[{assertion.category.value}]" + result.message
             result.details = assertion
             return result
 
         except ValueError as ve:
             # 路径不存在或类型错误，返回断言失败，带详细信息
-            return AssertResult(success=False, message=f"断言路径错误: {ve}", details=assertion)
+            return AssertResult(success=False, message=f"[{assertion.category.value}]断言路径错误: {ve}", details=assertion)
         except Exception as e:
-            return AssertResult(success=False, message=f"断言执行异常: {e}", details=assertion)
+            return AssertResult(success=False, message=f"[{assertion.category.value}]断言执行异常: {e}", details=assertion)
 
     @staticmethod
-    def compare_values(actual, operator: AssertOperator, expected, path=None) -> AssertResult:
+    def compare_values(actual, operator: AssertOperator, expected, path=None, env: Dict[str, Any] = None) -> AssertResult:
         """
         比较实际值和预期值
         """
@@ -102,7 +103,6 @@ class AssertRunner:
         提取嵌套字段的值，支持对象和列表索引访问
         """
         fields = AssertRunner._parse_fields(field_path)
-        logger.debug(f"解析后的字段路径: {fields}")
         value = json_obj
         current_path = ""
 

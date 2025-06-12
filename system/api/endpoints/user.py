@@ -11,7 +11,7 @@ from common.core.exceptions import UsernameAlreadyExistsException, UsernameNotEx
     PasswordIncorrectException, TokenInvalidException
 from common.schemas.response import Response
 from system.schemas.user_schemas import UserCreate, UserOut, UserLogin, UserUpdate
-from system.crud import user_crud as user_crud
+from system.crud import user_crud
 
 router = APIRouter()
 

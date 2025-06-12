@@ -1,5 +1,5 @@
 from sqlalchemy import select
-from sqlmodel import Session
+from sqlalchemy.orm import Session
 
 from autotest.schemas.api_test_schemas import ApiTestCaseCreate, ApiTestCaseUpdate
 from common.models.api_test import ApiTestCase
@@ -41,3 +41,8 @@ def update_api_test(*, db: Session, test_in: ApiTestCaseUpdate):
     db.refresh(case)
 
     return case
+
+
+def get_api_test_list(*, db: Session):
+    results = db.query(ApiTestCase).all()
+    return results

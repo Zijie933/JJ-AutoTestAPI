@@ -13,3 +13,4 @@ class ErrorMessages:
     TEST_NOT_EXIST = "用例不存在"
 
     PARAM_ERROR = "参数错误"
+    STEP_RUN_FAILED = "步骤运行失败"

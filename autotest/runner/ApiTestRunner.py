@@ -1,16 +1,15 @@
 import asyncio
 import json
+from runpy import run_module
 from typing import List
 
 import httpx
 from httpx import Response, TimeoutException, RequestError, Request
 from loguru import logger
-from sqlmodel import Session
 
-from autotest.deps import SessionDep
 from autotest.runner.AssertRunner import AssertRunner
-from common.models.api_test import ApiTestCaseRunModel, ApiTestCase, ApiTestResponse, ApiRunnerResult
-from common.models.assertModel import AssertResult, Assert, AssertCategory, AssertOperator
+from common.models.api_test import ApiTestCaseRunModel, ApiTestResponse, ApiRunnerResult
+from common.models.assertModel import AssertResult
 from common.models.example import Example
 
 
@@ -49,15 +48,26 @@ class ApiTestRunner:
         result = ApiRunnerResult()
 
         try:
-            request_obj = client.build_request(
-                url=self.run_model.case.url,
-                method=self.run_model.case.method.upper(),
-                cookies=json.loads(example.cookies) if example.cookies else {},
-                headers=json.loads(example.headers) if example.headers else {},
-                params=json.loads(example.params) if example.params else {},
-                data=example.body,
-                timeout=example.timeout if example.timeout else self.run_model.timeout
-            )
+            if self.run_model.case_id:
+                request_obj = client.build_request(
+                    url=self.run_model.case.url,
+                    method=self.run_model.case.method.upper(),
+                    cookies=json.loads(example.cookies) if example.cookies else {},
+                    headers=json.loads(example.headers) if example.headers else {},
+                    params=json.loads(example.params) if example.params else {},
+                    data=example.body,
+                    timeout=example.timeout if example.timeout else self.run_model.timeout
+                )
+            else:
+                request_obj = client.build_request(
+                    url=self.run_model.case.url,
+                    method=self.run_model.case.method.upper(),
+                    cookies=json.loads(self.run_model.case.cookies) if self.run_model.case and self.run_model.case.cookies else {},
+                    headers=json.loads(self.run_model.case.headers) if self.run_model.case and self.run_model.case.headers else {},
+                    params=json.loads(self.run_model.case.params) if self.run_model.case and self.run_model.case.params else {},
+                    data=self.run_model.case.body if self.run_model.case and self.run_model.case.body else None,
+                    timeout=self.run_model.timeout if self.run_model.timeout is not None else 10,
+                )
             response_obj: Response = await client.send(request_obj)
 
             logger.info(response_obj.text)
@@ -70,15 +80,17 @@ class ApiTestRunner:
                 text=response_obj.text,
                 cookies=dict(response_obj.cookies),
                 headers=response_obj.headers,
+                time=response_time_ms
             )
 
             for assertion in example.asserts:
-                res = AssertRunner.run_assert(assertion, result.response, response_time=response_time_ms)
+                res = AssertRunner.run_assert(assertion=assertion, response=result.response)
                 result.assert_result.append(AssertResult(
                     message=res.message,
                     success=res.success,
                     details=res.details
                 ))
+
 
             # 假如没有断言
             if not result.assert_result:

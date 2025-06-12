@@ -52,5 +52,13 @@ class TokenInvalidException(AppBaseException):
     def __init__(self, message: str = ErrorMessages.TOKEN_INVALID):
         super().__init__(message)
 
+# step执行错误
+class StepRunError(AppBaseException):
+    """
+    step执行错误
+    """
+    def __init__(self, message: str = ErrorMessages.STEP_RUN_FAILED):
+        super().__init__(message)
+
 
 

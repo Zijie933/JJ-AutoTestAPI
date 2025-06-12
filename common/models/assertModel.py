@@ -14,6 +14,7 @@ class AssertCategory(str, Enum):
     BODY_TEXT = "body_text"          # 响应体字符串断言
     HEADER_FIELD = "header_field"    # 响应头字段断言
     COOKIES_FIELD = "cookies_field"  # Cookie字段断言
+    ENV = "env"                      # 环境变量断言
 
 class AssertOperator(str, Enum):
     """
@@ -32,6 +33,7 @@ class AssertOperator(str, Enum):
     NOT_EXISTS = "not_exists"      # 字段不存在
     STARTS_WITH = "starts_with"    # 字符串开头
     ENDS_WITH = "ends_with"        # 字符串结尾
+
 
 class Assert(SQLModel):
     """

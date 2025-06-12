@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from sqlmodel import SQLModel, Field
 from typing import Optional, Dict, List, Any
 
-from common.models.assertModel import Assert, AssertResult
+from common.models.assertModel import AssertResult
 from common.models.example import Example
 
 
@@ -18,6 +18,11 @@ class ApiTestCase(SQLModel, table=True):
     url: str = Field(..., description="接口 URL")
     method: str = Field(..., description="请求方法")
 
+    headers: Optional[str] = Field(default=None, description="请求头")
+    params: Optional[str] = Field(default=None, description="Query 参数")
+    body: Optional[str] = Field(default=None, description="请求体")
+    cookies: Optional[str] = Field(default=None, description="请求 Cookies")
+
 class ApiTestResponse(SQLModel):
     """
     自定义 API 响应类
@@ -26,9 +31,11 @@ class ApiTestResponse(SQLModel):
     cookies: Dict[str, Any] = Field({}, description="响应 Cookie")
     headers: Dict[str, Any] = Field({}, description="响应 Header")
     body: Any = Field(None, description="响应 Body")
+    response_time: Optional[float] = Field(None, description="响应时间")
+
 
     @staticmethod
-    def init(*, status_code: int = None, headers: dict = None, cookies: dict = None, text: str = None):
+    def init(*, status_code: int = None, headers: dict = None, cookies: dict = None, text: str = None, time: float = None):
         try:
             body = json.loads(text)
         except JSONDecodeError or TypeError:
@@ -37,7 +44,8 @@ class ApiTestResponse(SQLModel):
             status_code=status_code,
             headers=headers,
             cookies=cookies,
-            body=body
+            body=body,
+            response_time=time
         )
 
     def _parse_json(self, json_str: str) -> Dict[str, Any]:
@@ -70,39 +78,26 @@ class ApiTestResponse(SQLModel):
         return self.cookies.get(key)
 
 
-
-
 class ApiTestCaseRunModel(BaseModel):
     """
     用例执行输入模型
     """
-    case_id: Optional[int] = Field(..., description="用例 ID")
+    case_id: Optional[int] = Field(None, description="用例 ID")
     case: Optional[ApiTestCase] = Field(None, description="用例")
-
-    # # 断言列表
-    # asserts: List[Assert] = Field(default_factory=list, description="断言列表")
-    #
-    # # 请求部分
-    # headers: Optional[str] = Field(default=None, description="请求头")
-    # params: Optional[str] = Field(default=None, description="Query 参数")
-    # body: Optional[str] = Field(default=None, description="请求体")
-    # cookies: Optional[str] = Field(default=None, description="请求 Cookies")
     timeout: Optional[int] = Field(default=10, description="全局请求超时时间，单位秒")
 
     # 用例列表
     examples: Optional[list[Example]] = Field(default=[], description="用例列表")
 
-    # # 响应部分
-    # response: Optional[ApiTestResponse] = Field(default=None, description="响应部分")
-
-
 class ApiRunnerResult(SQLModel):
     """
-    Runner运行结果
+    ApiRunner运行结果
     """
     message: str = Field(default=None, description="运行结果说明")
+    example_params: Optional[Dict] = Field(default=None, description="当前用例参数")
     response: ApiTestResponse = Field(default=None, description="响应部分")
-    assert_result: List[AssertResult] = Field(default=[], description="断言结果")
+    assert_result: List[AssertResult] = Field(default=[], description="用例结果")
+
 
 
 

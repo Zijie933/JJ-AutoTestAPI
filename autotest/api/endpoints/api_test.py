@@ -1,11 +1,15 @@
 from typing import List, Optional
 
 from fastapi import APIRouter
+from pydantic import ValidationError
 
 from autotest.crud import api_test_crud
-from autotest.schemas.api_test_schemas import ApiTestCaseCreate, ApiTestCaseUpdate, ApiTestCaseRunParams
+from autotest.schemas.api_test_schemas import ApiTestCaseCreate, ApiTestCaseUpdate, ApiTestCaseRunParams, \
+    ApiTestStepsRunParams
 from autotest.service.ApiTestService import ApiTestService
 from common.core.constants import ErrorMessages
+from common.core.exceptions import MissingFieldException
+from common.models.api_test import ApiTestCase
 from system.deps import SessionDep
 from common.schemas.response import Response
 
@@ -40,6 +44,11 @@ async def update_api_test(*, db: SessionDep, test_in: ApiTestCaseUpdate):
 
     return Response.success(data=api_test_case)
 
+@router.get("/list", response_model=Response, description="获取接口列表")
+def get_api_test_list(db: SessionDep):
+    api_test_cases = api_test_crud.get_api_test_list(db=db)
+    return Response.success(data=api_test_cases)
+
 @router.get("/{case_id}", response_model=Response, description="根据id获取接口")
 def get_api_test_by_id(*, db: SessionDep, case_id: int):
     api_test_case = api_test_crud.get_api_test_by_id(db=db, test_id=case_id)
@@ -48,15 +57,16 @@ def get_api_test_by_id(*, db: SessionDep, case_id: int):
 
     return Response.success(data=api_test_case)
 
-@router.post("/run/{case_id}", response_model=Response, description="测试接口")
+@router.post("/run", response_model=Response, description="测试id接口")
 async def run_api_test(*, db: SessionDep, test_in: ApiTestCaseRunParams):
-    api_test_case = api_test_crud.get_api_test_by_id(db=db, test_id=test_in.id)
-    if not api_test_case:
-        return Response.fail(message=ErrorMessages.TEST_NOT_EXIST)
-
-    case_run_model = ApiTestService.init(api_test_case)
-    case_run_model.examples = test_in.examples or []
+    case_run_model = ApiTestService.init(db=db, run_params=test_in)
     response = await ApiTestService.run(case_run_model)
     return Response.success(data=response)
 
+
+@router.post("/steps/run", response_model=Response, description="测试多依赖接口")
+async def run_api_test(*, db: SessionDep, test_in: ApiTestStepsRunParams):
+    step_run_model = ApiTestService.init(db=db, run_params=test_in)
+    response = await ApiTestService.run_steps(step_run_model)
+    return Response.success(data=response)
 

@@ -13,6 +13,6 @@ class Example(SQLModel):
     params: Optional[str] = Field(default=None, description="Query 参数")
     body: Optional[str] = Field(default=None, description="请求体")
     cookies: Optional[str] = Field(default=None, description="请求 Cookies")
-    timeout: Optional[int] = Field(default=None, description="局部请求超时时间，单位秒")
+    timeout: Optional[int] = Field(default=10, description="局部请求超时时间，单位秒")
 
     asserts: Optional[List[Assert]] = Field(default=[], description="断言")
