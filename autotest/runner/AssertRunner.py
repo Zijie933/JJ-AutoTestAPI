@@ -21,7 +21,7 @@ class AssertRunner:
             elif assertion.category == AssertCategory.BODY_TEXT:
                 value = json.dumps(response.body, ensure_ascii=False)
             elif assertion.category == AssertCategory.STATUS_CODE:
-                value = response.status_code
+                value = str(response.status_code)
             elif assertion.category == AssertCategory.RESPONSE_TIME:
                 value = response.response_time
             elif assertion.category == AssertCategory.HEADER_FIELD:

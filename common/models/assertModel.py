@@ -33,8 +33,7 @@ class AssertOperator(str, Enum):
     NOT_EXISTS = "not_exists"      # 字段不存在
     STARTS_WITH = "starts_with"    # 字符串开头
     ENDS_WITH = "ends_with"        # 字符串结尾
-
-
+ 
 class Assert(SQLModel):
     """
     断言模型

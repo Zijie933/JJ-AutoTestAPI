@@ -1,6 +1,7 @@
 from typing import List, Optional
 
 from fastapi import APIRouter
+from loguru import logger
 from pydantic import ValidationError
 
 from autotest.crud import api_test_crud
@@ -59,14 +60,23 @@ def get_api_test_by_id(*, db: SessionDep, case_id: int):
 
 @router.post("/run", response_model=Response, description="测试id接口")
 async def run_api_test(*, db: SessionDep, test_in: ApiTestCaseRunParams):
-    case_run_model = ApiTestService.init(db=db, run_params=test_in)
-    response = await ApiTestService.run(case_run_model)
+    case_run_model = ApiTestService.init_case(db=db, run_params=test_in)
+    response = await ApiTestService.run_case(case_run_model)
+    logger.info(response)
     return Response.success(data=response)
 
 
 @router.post("/steps/run", response_model=Response, description="测试多依赖接口")
 async def run_api_test(*, db: SessionDep, test_in: ApiTestStepsRunParams):
-    step_run_model = ApiTestService.init(db=db, run_params=test_in)
+    step_run_model = ApiTestService.init_step(db=db, run_params=test_in)
     response = await ApiTestService.run_steps(step_run_model)
     return Response.success(data=response)
+
+@router.delete("/{case_id}", response_model=Response, description="删除接口")
+def delete_api_test(*, db: SessionDep, case_id: int):
+    result = api_test_crud.delete_api_test(db=db, test_id=case_id)
+    if not result:
+        return Response.fail(message=ErrorMessages.TEST_NOT_EXIST)
+
+    return Response.success()
 

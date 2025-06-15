@@ -27,7 +27,7 @@ async def create_user(*, db: SessionDep, user_in: UserCreate):
     if user:
         raise UsernameAlreadyExistsException()
 
-    user = user_crud.create_user(user=user_in, db=db)
+    user = user_crud.create_user(user_in=user_in, db=db)
     return Response.success(data=user)
 
 

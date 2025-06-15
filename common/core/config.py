@@ -26,13 +26,15 @@ class Settings(BaseSettings):
     MYSQL_PASSWORD: str = Field("123456", env="MYSQL_PASSWORD")
     MYSQL_HOST: str = Field("127.0.0.1", env="MYSQL_HOST")
     MYSQL_PORT: int = Field(3306, env="MYSQL_PORT")
+    # 自定义库名 或 使用 jj_autotest_db
+    MYSQL_DB: str = Field("jj_autotest_db", env="MYSQL_DB")
 
     @property
     def MYSQL_URL(self) -> str:
         return (
             f"mysql+pymysql://{self.MYSQL_USER}:"
             f"{self.MYSQL_PASSWORD}@{self.MYSQL_HOST}:"
-            f"{self.MYSQL_PORT}/fastapi_demo_jack"
+            f"{self.MYSQL_PORT}/{self.MYSQL_DB}"
         )
 
 

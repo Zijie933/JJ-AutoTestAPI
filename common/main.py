@@ -20,8 +20,8 @@ def create_db_and_tables():
 # 注册路由
 init_router(application)
 
-# 注册拦截器 -- 演示时不进行token验证
-# init_middleware(application)
+# 注册中间件
+init_middleware(application)
 
 # 注册异常处理
 init_exception_handler(application)

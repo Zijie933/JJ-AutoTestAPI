@@ -19,8 +19,8 @@ class ApiTestService:
 
     # 初始化数据
     @staticmethod
-    def init(*, db: Session | None, run_params: ApiTestCaseRunParams) -> ApiTestCaseRunModel:
-        if not id:
+    def init_case(*, db: Session | None, run_params: ApiTestCaseRunParams) -> ApiTestCaseRunModel:
+        if run_params.id:
             # 优选择id用例
             case = api_test_crud.get_api_test_by_id(db=db, test_id=run_params.id)
             if not case:
@@ -39,8 +39,8 @@ class ApiTestService:
         )
 
     @staticmethod
-    def init(*, db: Session, run_params: ApiTestStepsRunParams) -> StepRunModel:
-        if not id:
+    def init_step(*, db: Session, run_params: ApiTestStepsRunParams) -> StepRunModel:
+        if run_params.id:
             # 优选择id用例
             case = api_test_crud.get_api_test_by_id(db=db, test_id=run_params.id)
             if not case:
@@ -61,7 +61,7 @@ class ApiTestService:
         )
 
     @staticmethod
-    async def run(case: ApiTestCaseRunModel):
+    async def run_case(case: ApiTestCaseRunModel):
         runner = ApiTestRunner(case)
         assert_results = await runner.run_concurrent_tests()
         return ApiTestCaseRunResponse(
@@ -83,8 +83,8 @@ class ApiTestService:
 
         # 跑case
         api_run_params = ApiTestCaseRunParams(case=case.case, examples=case.examples)
-        api_run_model = ApiTestService.init(db=None, run_params=api_run_params)
-        api_response = await ApiTestService.run(api_run_model)
+        api_run_model = ApiTestService.init_case(db=None, run_params=api_run_params)
+        api_response = await ApiTestService.run_case(api_run_model)
 
         return StepRunResponse(
             case=api_response.case,

@@ -16,11 +16,22 @@ class ApiTestCaseCreate(SQLModel):
     url: str = Field(..., description="接口请求地址", examples=["http://www.baidu.com"])
     method: str = Field(..., description="请求方法，如GET、POST", examples=["GET"])
 
+    headers: Optional[str] = Field(default=None, description="默认请求头")
+    params: Optional[str] = Field(default=None, description="默认 Query 参数")
+    body: Optional[str] = Field(default=None, description="默认请求体")
+    cookies: Optional[str] = Field(default=None, description="默认请求 Cookies")
+
+
 class ApiTestCaseUpdate(SQLModel):
     id: int = Field(..., description="用例 ID", examples=[1])
     name: Optional[str] = Field(default=None, description="用例名称", examples=["测试用例2"])
     url: Optional[str] = Field(default=None, description="接口请求地址", examples=["http://www.baidu.com"])
     method: Optional[str] = Field(default=None, description="请求方法，如GET、POST", examples=["GET"])
+
+    headers: Optional[str] = Field(default=None, description="请求头")
+    params: Optional[str] = Field(default=None, description="Query 参数")
+    body: Optional[str] = Field(default=None, description="请求体")
+    cookies: Optional[str] = Field(default=None, description="请求 Cookies")
 
 class ApiTestCaseRunParams(SQLModel):
     id: Optional[int] = Field(default=None, description="用例 ID", examples=apiTestCaseRunParamsExample.get("id"))

@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from fastapi import FastAPI, Request
 from loguru import logger
+from starlette.middleware.cors import CORSMiddleware
 
 from common.core.PayloadLocal import payloadLocal
 from common.core.config import settings
@@ -8,9 +9,21 @@ from common.core.constants import ErrorMessages
 from common.core.exceptions import TokenInvalidException
 
 def init_middleware(app: FastAPI):
+    # 注册 token 拦截器
+    # token_interceptor(app)
+
+    # 注册 CORS 中间件
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+def token_interceptor(app: FastAPI):
 
     """
-    中间件，用于处理Token
+    拦截器，用于处理Token
     """
 
     whitelist = settings.WHITE_LIST

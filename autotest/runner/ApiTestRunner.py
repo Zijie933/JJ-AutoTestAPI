@@ -70,9 +70,6 @@ class ApiTestRunner:
                 )
             response_obj: Response = await client.send(request_obj)
 
-            logger.info(response_obj.text)
-            logger.info(type(response_obj.text))
-
             # 将响应封装成 ApiTestResponse
             response_time_ms = response_obj.elapsed.total_seconds() * 1000
             result.response = ApiTestResponse.init(

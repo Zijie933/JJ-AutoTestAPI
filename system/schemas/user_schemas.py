@@ -9,7 +9,7 @@ class UserBase(SQLModel):
     username: str = Field(..., min_length=1, max_length=12, examples=["Jack"])
 
 class UserCreate(UserBase):
-    password: str = Field("123456", min_length=6, max_length=22, examples=["1234567"])
+    password: str = Field("1234567", min_length=6, max_length=22, examples=["1234567"])
 
 class UserLogin(UserBase):
     password: str = Field(..., min_length=6, max_length=22, examples=[{"username": "Jack", "password": "1234567"}])

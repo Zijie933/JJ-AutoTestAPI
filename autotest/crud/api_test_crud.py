@@ -35,6 +35,15 @@ def update_api_test(*, db: Session, test_in: ApiTestCaseUpdate):
         case.url = test_in.url
     if test_in.method is not None:
         case.method = test_in.method.upper()
+    if test_in.headers is not None:
+        case.headers = test_in.headers
+    if test_in.body is not None:
+        case.body = test_in.body
+    if test_in.params is not None:
+        case.params = test_in.params
+    if test_in.cookies is not None:
+        case.cookies = test_in.cookies
+
 
     db.add(case)
     db.commit()
@@ -46,3 +55,12 @@ def update_api_test(*, db: Session, test_in: ApiTestCaseUpdate):
 def get_api_test_list(*, db: Session):
     results = db.query(ApiTestCase).all()
     return results
+
+
+def delete_api_test(*, db: Session, test_id: int):
+    api_test_case = db.get(ApiTestCase, test_id)
+    if not api_test_case:
+        return False
+    db.delete(api_test_case)
+    db.commit()
+    return True
