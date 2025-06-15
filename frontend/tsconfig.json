@@ -1,0 +1,32 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "useDefineForClassFields": true,
+    "module": "NodeNext", // 修改为 NodeNext，与 tsconfig.node.json 保持一致
+    "moduleResolution": "NodeNext", // 可选，也可以保持为 "Node"
+    "strict": true,
+    "jsx": "preserve",
+    "sourceMap": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "lib": ["ESNext", "DOM"],
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    },
+    "types": ["vite/client", "node"] // 增加 node 类型支持
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.d.ts",
+    "src/**/*.tsx",
+    "src/**/*.vue",
+    "vite.config.ts",
+    "src/env.d.ts",
+    "tsconfig.node.json"
+  ],
+  "references": [{ "path": "./tsconfig.node.json" }]
+}
