@@ -67,3 +67,49 @@ apiTestCaseRunParamsExample = {
         ),
     ]]
 }
+
+api_test_steps_run_example = {
+    "case": {
+        "name": "Step运行完 获得env变量 的最终接口测试",
+        "url": "http://127.0.0.1:9101/user/",
+        "method": "GET",
+        "headers": "{\"Authorization\":\"${token}\"}"
+    },
+    "steps": [
+        {
+            "name": "步骤1-获取token",
+            "case": {
+                "name": "获取token",
+                "url": "http://127.0.0.1:9101/user/login",
+                "method": "POST",
+                "body": "{\"username\":\"JJack\",\"password\":\"1234567\"}"
+            },
+            "asserts": [
+                {
+                    "category": "body_field",
+                    "operator": "==",
+                    "path": "code",
+                    "expected": "0"
+                }
+            ],
+            "extract": "{\"token\":\"body.data\"}"
+        },
+        {
+            "name": "步骤2-获取该用户信息",
+            "case": {
+                "name": "获取用户信息",
+                "url": "http://127.0.0.1:9101/user/",
+                "method": "GET",
+                "headers": "{\"Authorization\":\"${token}\"}"
+            },
+            "asserts": [
+                {
+                    "category": "body_field",
+                    "operator": "==",
+                    "path": "code",
+                    "expected": "0"
+                }
+            ]
+        }
+    ]
+}

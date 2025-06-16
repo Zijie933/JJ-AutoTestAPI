@@ -24,3 +24,13 @@ export interface LoginResponse {
   username?: string; // Optional: if your backend returns username upon login
   // Add other fields your backend returns upon login if necessary
 }
+
+// Re-export types from autotest.ts to be available via '@/api/types'
+export type {
+    ApiCase as ApiTestCase, // Assuming ApiCase is the intended type for ApiTestCase in RunStepTest.vue
+    Example,
+    StepInput,
+    ApiTestStepsRunParams,
+    StepRunResponse,
+    ApiTestCaseData // Exporting this as well as it's used in StepInput and StepRunResponse
+} from './autotest.js';

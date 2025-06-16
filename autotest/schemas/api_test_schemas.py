@@ -5,7 +5,7 @@ from pydantic import Field
 from sqlmodel import SQLModel
 
 from autotest.schemas.examples import apiTestCaseRunParamsExample
-from common.models.api_test import ApiTestResponse, ApiTestCase
+from common.models.api_test import ApiTestResponse, ApiTestCase, ApiRunnerResult
 from common.models.assertModel import Assert, AssertCategory, AssertOperator
 from common.models.example import Example
 from common.models.step import Step, SingleStepRunnerResult
@@ -59,10 +59,11 @@ class ApiTestCaseRunResponse(SQLModel):
     # method: str = Field(..., description="请求方法")
     case: Optional[ApiTestCase] = Field(default=None, description="用例")
     # 运行结果
-    running_results: List[Any]
+    running_results: List[ApiRunnerResult]
 
 class StepRunResponse(SQLModel):
     case: Optional[ApiTestCase] = Field(default=None, description="用例")
+    case_running_results: Optional[Any] = Field(default=None, description="用例响应")
 
     step_run_success: bool = Field(default=False, description="运行结果")
     step_run_message: str = Field(default=None, description="运行结果说明")

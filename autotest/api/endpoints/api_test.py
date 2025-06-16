@@ -1,12 +1,13 @@
 from typing import List, Optional
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Body
 from loguru import logger
 from pydantic import ValidationError
 
 from autotest.crud import api_test_crud
 from autotest.schemas.api_test_schemas import ApiTestCaseCreate, ApiTestCaseUpdate, ApiTestCaseRunParams, \
     ApiTestStepsRunParams
+from autotest.schemas.examples import api_test_steps_run_example
 from autotest.service.ApiTestService import ApiTestService
 from common.core.constants import ErrorMessages
 from common.core.exceptions import MissingFieldException

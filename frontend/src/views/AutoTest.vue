@@ -16,8 +16,8 @@
           <run-api-test />
         </el-tab-pane>
         <el-tab-pane label="执行场景测试" name="runStepTest">
-          <run-step-test />
-        </el-tab-pane>
+          // <RunStepTest v-if="activeTab === 'runStepTest'" />
+        </el-tab-pane> 
         <!-- Add more tabs for other functionalities -->
       </el-tabs>
     </el-main>
@@ -110,3 +110,20 @@ const handleLogout = () => {
   box-shadow: 0 2px 12px 0 rgba(0,0,0,.1);
 }
 </style>
+
+<template>
+  <div class="autotest-container">
+    <el-tabs v-model="activeTab" class="autotest-tabs">
+      <el-tab-pane label="API用例管理" name="apiCaseManagement">
+        <ApiCaseManagement v-if="activeTab === 'apiCaseManagement'" />
+      </el-tab-pane>
+      <el-tab-pane label="API测试执行" name="apiTestRunner">
+        <ApiTestRunner v-if="activeTab === 'apiTestRunner'" />
+      </el-tab-pane>
+      <!-- <el-tab-pane label="执行场景测试" name="runStepTest">
+        // <RunStepTest v-if="activeTab === 'runStepTest'" /> 
+      </el-tab-pane> --> // Ensure this block is commented out or removed
+      <!-- Add more tabs for other functionalities -->
+    </el-tabs>
+  </div>
+</template>

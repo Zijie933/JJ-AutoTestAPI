@@ -2,6 +2,7 @@
   <div class="api-test-runner">
     <el-button type="primary" @click="runQuickTest">快捷测试</el-button>
     <el-button type="success" @click="showExampleRunDialog = true">快捷用例测试（含Examples）</el-button>
+    <el-button type="warning" @click="showMultiVarTestDialog = true">多变量依赖测试</el-button> <!-- Added this button -->
 
     <el-dialog v-model="runTestModalVisible" title="执行API测试用例" width="60%" @closed="resetRunModal">
       <el-form :model="runForm" label-width="120px">
@@ -170,16 +171,377 @@
       </template>
     </el-dialog>
 
+    <!-- Added Dialog for Multi-variable Step Test START -->
+    <el-dialog v-model="showMultiVarTestDialog" title="多变量依赖测试" width="70%" @closed="resetMultiVarTestDialog">
+      <el-form :model="multiVarForm" label-width="120px">
+        <el-tabs v-model="activeTabInMultiVarDialog">
+          <el-tab-pane label="快捷用例详情" name="caseDetails">
+            <el-form-item label="选择用例 (ID)">
+              <el-select 
+                v-model="selectedCaseId" 
+                placeholder="可选，选择一个已存在的API用例" 
+                filterable 
+                clearable
+                style="width: 100%;"
+                @change="handleMultiVarBaseCaseChange"
+              >
+                <el-option
+                  v-for="item in availableApiCases"
+                  :key="item.id"
+                  :label="`${item.name} (${item.method} - ${item.url})`"
+                  :value="item.id"
+                ></el-option>
+              </el-select>
+            </el-form-item>
+            <el-form-item label="用例名称">
+              <el-input v-model="multiVarForm.caseDetail.name" placeholder="必填"></el-input>
+            </el-form-item>
+            <el-form-item label="请求URL">
+              <el-input v-model="multiVarForm.caseDetail.url" placeholder="可选，若不填用例ID则必填"></el-input>
+            </el-form-item>
+            <el-form-item label="请求方法">
+              <el-select v-model="multiVarForm.caseDetail.method" placeholder="可选，若不填用例ID则必填" style="width: 100%;">
+                <el-option label="GET" value="GET"></el-option>
+                <el-option label="POST" value="POST"></el-option>
+                <el-option label="PUT" value="PUT"></el-option>
+                <el-option label="DELETE" value="DELETE"></el-option>
+              </el-select>
+            </el-form-item>
+            <el-form-item label="请求头 (JSON)">
+              <el-input type="textarea" :rows="3" v-model="multiVarForm.caseDetail.headers" placeholder="可选，请输入 JSON 对象字符串"></el-input>
+            </el-form-item>
+            <el-form-item label="Query参数 (JSON)">
+              <el-input type="textarea" :rows="3" v-model="multiVarForm.caseDetail.params" placeholder="可选，请输入 JSON 对象字符串"></el-input>
+            </el-form-item>
+            <el-form-item label="请求体 (JSON)">
+              <el-input type="textarea" :rows="5" v-model="multiVarForm.caseDetail.body" placeholder="可选，请输入 JSON 对象字符串"></el-input>
+            </el-form-item>
+            <el-form-item label="Cookies (JSON)">
+              <el-input type="textarea" :rows="2" v-model="multiVarForm.caseDetail.cookies" placeholder="可选，请输入 JSON 对象字符串"></el-input>
+            </el-form-item>
+            <div style="margin-top: 10px; color: #909399; font-size: 12px;">
+              提示：用例ID对应数据库中已存在的用例。若不填写用例ID，则需要手动填写请求URL和请求方法等信息来定义一个临时用例。
+            </div>
+          </el-tab-pane>
+          <el-tab-pane label="环境变量与步骤" name="envAndSteps">
+            <el-form-item label="环境变量 (JSON)">
+              <el-input type="textarea" v-model="multiVarForm.envJson" :rows="3" placeholder="可选，请输入环境变量，格式为 JSON 对象"></el-input>
+            </el-form-item>
+
+            <h4>测试步骤</h4>
+            <div v-for="(step, index) in multiVarForm.steps" :key="index" class="step-item-dialog" style="margin-bottom: 20px; border: 1px solid #ebeef5; padding: 15px; border-radius: 4px;">
+              <el-card shadow="never">
+                <template #header>
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>步骤 {{ index + 1 }}</span>
+                    <el-button type="danger" size="small" @click="removeMultiVarStep(index)">删除步骤</el-button>
+                  </div>
+                </template>
+                <el-form-item :label="`步骤 ${index + 1} 名称`">
+                  <el-input v-model="step.name" placeholder="步骤名称"></el-input>
+                </el-form-item>
+                <el-form-item :label="`请求方法`">
+                  <el-select v-model="step.method" placeholder="选择请求方法" style="width: 100%;">
+                    <el-option label="GET" value="GET"></el-option>
+                    <el-option label="POST" value="POST"></el-option>
+                    <el-option label="PUT" value="PUT"></el-option>
+                    <el-option label="DELETE" value="DELETE"></el-option>
+                    <el-option label="PATCH" value="PATCH"></el-option>
+                  </el-select>
+                </el-form-item>
+                <el-form-item :label="`请求URL`">
+                  <el-input v-model="step.url" placeholder="请输入请求URL"></el-input>
+                </el-form-item>
+                <el-form-item :label="`请求头 (JSON)`">
+                  <el-input type="textarea" v-model="step.headersJson" placeholder="请输入请求头，格式为 JSON 对象"></el-input>
+                </el-form-item>
+                <el-form-item :label="`请求体 (JSON)`">
+                  <el-input type="textarea" v-model="step.bodyJson" placeholder="请输入请求体，格式为 JSON 对象"></el-input>
+                </el-form-item>
+                <el-form-item :label="`提取变量 (JSON)`">
+                  <el-input type="textarea" v-model="step.extractJson" placeholder="请输入提取规则，格式为 JSON 对象，例如 {'token': 'data.accessToken'}"></el-input>
+                </el-form-item>
+                <el-form-item :label="`断言 (JSON)`">
+                  <el-input type="textarea" v-model="step.assertsJson" placeholder="请输入断言规则，格式为 JSON 数组"></el-input>
+                </el-form-item>
+              </el-card>
+            </div>
+            <el-button type="success" @click="addMultiVarStep" style="margin-top: 10px;">添加步骤</el-button>
+          </el-tab-pane>
+        </el-tabs>
+      </el-form>
+      <div v-if="multiVarTestResult" class="result-display" style="margin-top: 20px; padding: 15px; border: 1px solid #ebeef5; border-radius: 4px; background-color: #f5f7fa;">
+        <h4>执行结果:</h4>
+        <pre style="white-space: pre-wrap; word-wrap: break-word;">{{ multiVarTestResult }}</pre>
+      </div>
+      <div v-if="multiVarErrorInfo" class="error-display" style="margin-top: 20px; padding: 15px; border: 1px solid #f56c6c; border-radius: 4px; color: #f56c6c; background-color: #fef0f0;">
+        <h4>错误信息:</h4>
+        <pre style="white-space: pre-wrap; word-wrap: break-word;">{{ multiVarErrorInfo }}</pre>
+      </div>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="showMultiVarTestDialog = false">取消</el-button>
+          <el-button type="primary" @click="handleRunMultiVarSteps" :loading="isLoadingMultiVar">
+            执行测试
+          </el-button>
+        </span>
+      </template>
+    </el-dialog>
+    <!-- Added Dialog for Multi-variable Step Test END -->
+
   </div>
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted, computed, watch } from 'vue';
-import { ElMessage, ElButton, ElDialog, ElForm, ElFormItem, ElSelect, ElOption } from 'element-plus';
-import { getAllApiCases, type ApiCase, ApiTestCaseRunPayload, Example, AssertCategory, AssertOperator, Assert } from '@/api/autotest';
+import { ref, onMounted, computed, watch, reactive } from 'vue';
+import { ElMessage, ElButton, ElDialog, ElForm, ElFormItem, ElSelect, ElOption, ElCard, ElInput, ElInputNumber, ElTabs, ElTabPane } from 'element-plus'; // Added ElTabs, ElTabPane
+import { getAllApiCases, type ApiCase, ApiTestCaseRunPayload, Example, AssertCategory, AssertOperator, Assert, runApiTestSteps, type ApiTestStepsRunParams, type StepInput, type StepRunResponse, type ApiTestCaseData } from '@/api/autotest'; // Added runApiTestSteps and related types
 import apiClient from '@/api'; // Or your specific API client if different
 import { runApiTestCase as actualRunApiTestCase } from '@/api/autotest';
 import type { FormInstance } from 'element-plus';
+
+// Multi-variable Step Test related reactive variables
+const showMultiVarTestDialog = ref(false);
+const isLoadingMultiVar = ref(false);
+const multiVarTestResult = ref<StepRunResponse[] | null>(null);
+const multiVarErrorInfo = ref<string | null>(null);
+const activeTabInMultiVarDialog = ref('caseDetails'); // Added this line
+
+interface FormStepInput {
+  name: string;
+  method: string;
+  url: string;
+  headersJson?: string;
+  bodyJson?: string;
+  extractJson?: string;
+  assertsJson?: string;
+}
+
+// Define a type for the caseDetail part of the form
+interface MultiVarCaseDetailForm {
+  id?: number | null; // Allow null for empty input, convert to undefined or handle in logic
+  name: string;
+  url: string;
+  method: string;
+  headers?: string; // JSON string
+  params?: string;  // JSON string
+  body?: string;    // JSON string
+  cookies?: string; // JSON string
+}
+
+const multiVarForm = reactive<{
+  caseDetail: MultiVarCaseDetailForm;
+  envJson: string;
+  steps: FormStepInput[];
+}> ({
+  caseDetail: {
+    id: undefined,
+    name: '',
+    url: '',
+    method: 'GET',
+    headers: '{}',
+    params: '{}',
+    body: '{}',
+    cookies: '{}',
+  },
+  envJson: '',
+  steps: [],
+});
+
+const selectedCaseId = computed({
+  get: () => multiVarForm.caseDetail.id === null ? undefined : multiVarForm.caseDetail.id,
+  set: (val) => {
+    multiVarForm.caseDetail.id = val === null ? undefined : val;
+  }
+});
+
+const resetMultiVarTestDialog = () => {
+  multiVarForm.caseDetail = {
+    id: null,
+    name: '',
+    url: '',
+    method: 'GET',
+    headers: '{}',
+    params: '{}',
+    body: '{}',
+    cookies: '{}',
+  };
+  multiVarForm.envJson = '';
+  multiVarForm.steps = [];
+  multiVarTestResult.value = null;
+  multiVarErrorInfo.value = null;
+  isLoadingMultiVar.value = false;
+  activeTabInMultiVarDialog.value = 'caseDetails'; // Reset active tab
+};
+
+const handleMultiVarBaseCaseChange = (selectedId: number | null | undefined) => {
+  if (selectedId) {
+    const selectedCase = availableApiCases.value.find(c => c.id === selectedId);
+    if (selectedCase) {
+      // Only fill if the corresponding field in multiVarForm.caseDetail is empty or default
+      if (!multiVarForm.caseDetail.name) {
+        multiVarForm.caseDetail.name = selectedCase.name;
+      }
+      if (!multiVarForm.caseDetail.url) {
+        multiVarForm.caseDetail.url = selectedCase.url;
+      }
+      if (multiVarForm.caseDetail.method === 'GET' || !multiVarForm.caseDetail.method) { // Assuming GET is default
+        multiVarForm.caseDetail.method = selectedCase.method;
+      }
+      if (multiVarForm.caseDetail.headers === '{}' || !multiVarForm.caseDetail.headers) {
+        multiVarForm.caseDetail.headers = typeof selectedCase.headers === 'object' ? JSON.stringify(selectedCase.headers) : selectedCase.headers || '{}';
+      }
+      if (multiVarForm.caseDetail.params === '{}' || !multiVarForm.caseDetail.params) {
+        multiVarForm.caseDetail.params = typeof selectedCase.params === 'object' ? JSON.stringify(selectedCase.params) : selectedCase.params || '{}';
+      }
+      if (multiVarForm.caseDetail.body === '{}' || !multiVarForm.caseDetail.body) {
+        multiVarForm.caseDetail.body = typeof selectedCase.body === 'object' ? JSON.stringify(selectedCase.body) : selectedCase.body || '{}';
+      }
+      if (multiVarForm.caseDetail.cookies === '{}' || !multiVarForm.caseDetail.cookies) {
+        multiVarForm.caseDetail.cookies = typeof selectedCase.cookies === 'object' ? JSON.stringify(selectedCase.cookies) : selectedCase.cookies || '{}';
+      }
+    }
+  } else {
+    // If cleared, reset relevant fields if they were potentially auto-filled, or leave as is for manual input
+    // For now, let's not auto-clear, user can manually clear if needed or rely on placeholder text
+  }
+};
+
+const addMultiVarStep = () => {
+  multiVarForm.steps.push({
+    name: `Step ${multiVarForm.steps.length + 1}`,
+    method: 'GET', // Default method
+    url: '',      // Default empty URL
+    headersJson: '{}',
+    bodyJson: '{}',
+    extractJson: '{}',
+    assertsJson: '[]'
+  });
+};
+
+const removeMultiVarStep = (index: number) => {
+  multiVarForm.steps.splice(index, 1);
+};
+
+const handleRunMultiVarSteps = async () => {
+  isLoadingMultiVar.value = true;
+  multiVarTestResult.value = null;
+  multiVarErrorInfo.value = null;
+
+  // Validation: If caseDetail.id is not provided, then name, url, and method are required for the ad-hoc case.
+  if (!multiVarForm.caseDetail.id && (!multiVarForm.caseDetail.name || !multiVarForm.caseDetail.url || !multiVarForm.caseDetail.method)) {
+    multiVarErrorInfo.value = '未提供用例ID时，用例名称、请求URL和请求方法为必填项。';
+    isLoadingMultiVar.value = false;
+    ElMessage.error(multiVarErrorInfo.value);
+    return;
+  }
+
+  let stepsInput: StepInput[];
+  try {
+    stepsInput = multiVarForm.steps.map(s => {
+      const step: StepInput = {
+        name: s.name,
+        case: {
+          name: s.name, 
+          method: s.method,
+          url: s.url,
+          headers: s.headersJson && s.headersJson.trim() !== '' && s.headersJson.trim() !== '{}' ? s.headersJson : undefined, 
+          body: s.bodyJson && s.bodyJson.trim() !== '' && s.bodyJson.trim() !== '{}' ? s.bodyJson : undefined, 
+        }
+      };
+      // Only parse if extractJson is not empty or just whitespace
+      if (s.extractJson && s.extractJson.trim() !== '' && s.extractJson.trim() !== '{}') {
+        step.extract = JSON.parse(s.extractJson);
+      } else {
+        step.extract = {}; // Default to empty object if no valid JSON
+      }
+      // Only parse if assertsJson is not empty or just whitespace
+      if (s.assertsJson && s.assertsJson.trim() !== '' && s.assertsJson.trim() !== '[]') {
+        step.asserts = JSON.parse(s.assertsJson);
+      } else {
+        step.asserts = []; // Default to empty array if no valid JSON
+      }
+      return step;
+    });
+  } catch (e: any) {
+    const stepWithError = multiVarForm.steps.find(s => {
+        try { 
+            // Only parse extractJson and assertsJson here as headersJson/bodyJson are passed as strings
+            if(s.extractJson) JSON.parse(s.extractJson); 
+            if(s.assertsJson) JSON.parse(s.assertsJson); 
+            return false; 
+        } catch { return true; }
+    });
+    const stepName = stepWithError ? stepWithError.name : '未知步骤';
+    multiVarErrorInfo.value = `步骤 "${stepName}" 的提取或断言JSON解析错误: ${e.message}`;
+    isLoadingMultiVar.value = false;
+    ElMessage.error(multiVarErrorInfo.value);
+    return;
+  }
+
+  const params: ApiTestStepsRunParams = {
+    steps: stepsInput,
+    id: multiVarForm.caseDetail.id === null ? undefined : multiVarForm.caseDetail.id, // Assign id at root level
+  };
+
+  // Construct the case_detail from the form if name and url are provided
+  if (multiVarForm.caseDetail.name && multiVarForm.caseDetail.url) {
+    const caseData: Partial<ApiTestCaseData> = {
+      // id: multiVarForm.caseDetail.id === null ? undefined : multiVarForm.caseDetail.id, // Remove id from here
+      name: multiVarForm.caseDetail.name,
+      url: multiVarForm.caseDetail.url,
+      method: multiVarForm.caseDetail.method,
+    };
+    try {
+      if (multiVarForm.caseDetail.headers) caseData.headers = multiVarForm.caseDetail.headers; // Already a string
+      if (multiVarForm.caseDetail.params) caseData.params = multiVarForm.caseDetail.params; // Already a string
+      if (multiVarForm.caseDetail.body) caseData.body = multiVarForm.caseDetail.body;    // Already a string
+      if (multiVarForm.caseDetail.cookies) caseData.cookies = multiVarForm.caseDetail.cookies; // Already a string
+      
+      // Validate JSON strings if they are not empty or default '{}'
+      const validateJsonString = (jsonStr: string | undefined, fieldName: string) => {
+        if (jsonStr && jsonStr.trim() !== '{}' && jsonStr.trim() !== '') {
+          JSON.parse(jsonStr); // This will throw an error if invalid
+        }
+      };
+      validateJsonString(caseData.headers, '请求头');
+      validateJsonString(caseData.params, 'Query参数');
+      validateJsonString(caseData.body, '请求体');
+      validateJsonString(caseData.cookies, 'Cookies');
+
+      params.case = caseData as ApiTestCaseData; // Type assertion after checks
+    } catch (e: any) {
+      multiVarErrorInfo.value = `快捷用例 ${e.fieldName || ''} JSON解析错误: ${e.message}`;
+      isLoadingMultiVar.value = false;
+      ElMessage.error(multiVarErrorInfo.value);
+      return;
+    }
+  }
+  
+  if (multiVarForm.envJson) {
+    try {
+      params.env = JSON.parse(multiVarForm.envJson);
+    } catch (e: any) {
+      multiVarErrorInfo.value = `环境变量JSON解析错误: ${e.message}`;
+      isLoadingMultiVar.value = false;
+      ElMessage.error(multiVarErrorInfo.value);
+      return;
+    }
+  }
+  console.info(params)
+
+  try {
+    const response = await runApiTestSteps(params);
+    multiVarTestResult.value = response;
+    ElMessage.success('多变量依赖测试执行完成！');
+  } catch (error: any) {
+    console.error('Error running multi-variable steps:', error);
+    multiVarErrorInfo.value = error.response?.data?.detail || error.message || '执行多变量依赖测试失败';
+    ElMessage.error(); // Ensure error message is displayed
+  } finally {
+    isLoadingMultiVar.value = false;
+  }
+};
 
 interface NewExampleFormType extends Omit<Example, 'asserts'> {
   asserts: Assert[];
@@ -881,8 +1243,8 @@ const formattedJsonResult = computed(() => { // Original computed, now used for 
   overflow-y: auto;
   text-align: left; /* Ensures left alignment */
   line-height: 1.4;
-  word-wrap: break-word; /* Allows long strings to wrap */
-  white-space: pre-wrap; /* Preserves whitespace and allows wrapping */
+  word-wrap: break-word;
+  white-space: pre-wrap;
 }
 
 .json-output {

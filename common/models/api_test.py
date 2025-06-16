@@ -14,7 +14,7 @@ class ApiTestCase(SQLModel, table=True):
     APITest 基础信息模型
     """
     id: Optional[int] = Field(default=None, primary_key=True, index=True, description="用例 ID")
-    name: str = Field(..., description="用例名称")
+    name: str = Field(None, description="用例名称")
     url: str = Field(..., description="接口 URL")
     method: str = Field(..., description="请求方法")
 

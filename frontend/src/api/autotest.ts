@@ -44,7 +44,7 @@ export const deleteApiCase = (id: number): Promise<void> => {
 // representing the structure of the test execution result from your backend.
 // Corresponds to the backend's ApiTestCase class
 export interface ApiTestCaseData {
-  id: number;
+  id?: number; // Changed to optional
   name: string;
   description?: string; // Matches backend, optional
   // project_id is not in backend ApiTestCase model, removing
@@ -138,7 +138,7 @@ export interface ApiTestCaseRunPayload {
   examples?: Example[];        // List of examples to run with
 }
 
-export const runApiTestCase = (payload: ApiTestCaseRunPayload): Promise<ApiTestExecutionResult> => {
+export const runApiTestCase = (payload: ApiTestCaseRunPayload): Promise<any> => {
   // The endpoint is /autotest/run, and it's a POST request.
   // The payload now directly matches ApiTestCaseRunParams
   return apiClient.post<ApiTestExecutionResult>(`/autotest/run`, payload).then(res => res);
@@ -149,4 +149,38 @@ export const runApiTestCase = (payload: ApiTestCaseRunPayload): Promise<ApiTestE
   // If it was `res.data` before, it should be `res.data` now.
   // Given the previous successful change was `return apiClient.post<ApiTestExecutionResult>(...).then(res => res);`
   // I will keep it as `res` for consistency, but this is a common point of error if the apiClient wrapper behaves differently.
+};
+
+// Corresponds to backend's StepInput (simplified for frontend, assuming ApiTestCase is defined elsewhere or inline)
+export interface StepInput {
+  name: string;
+  case: Omit<ApiTestCaseData, 'id' | 'created_at' | 'updated_at'> & { id?: number; created_at?: string; updated_at?: string; }; // Use Omit to allow partial case details, then add back optional id and timestamps
+  asserts?: Assert[];
+  extract?: Record<string, string>; // { "variable_name": "body.field_to_extract" }
+}
+
+// Corresponds to backend's ApiTestStepsRunParams
+export interface ApiTestStepsRunParams {
+  id?: number; // Optional: ID of an existing ApiTestCase to use as the main case
+  case?: Omit<ApiTestCaseData, 'id' | 'created_at' | 'updated_at'> & { id?: number; created_at?: string; updated_at?: string; }; // Optional: A full ApiTestCase definition for the main case if not using id
+  steps: StepInput[];
+  env?: Record<string, any>; // Environment variables
+  examples?: Example[]; // Optional: Examples to run for the main case (if main case is executed)
+}
+
+// Corresponds to backend's StepRunResponse
+export interface StepRunResponse {
+  case?: ApiTestCaseData; // The main case that was (or would be) run
+  running_results?: any; // Results of the main case execution (structure depends on ApiTestRunner)
+  step_run_success: boolean;
+  step_run_message: string;
+  step_run_result?: any[]; // Array of SingleStepRunnerResult (define if needed, or use any)
+  end_env?: Record<string, any>; // Environment after all steps
+}
+
+// Function to run API test steps
+export const runApiTestSteps = (payload: ApiTestStepsRunParams): Promise<any> => {
+  console.info(payload)
+  return apiClient.post<BackendResponse<StepRunResponse>>(`/autotest/steps/run`, payload).then(res => res);
+
 };

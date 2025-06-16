@@ -63,10 +63,10 @@ class ApiTestService:
     @staticmethod
     async def run_case(case: ApiTestCaseRunModel):
         runner = ApiTestRunner(case)
-        assert_results = await runner.run_concurrent_tests()
+        results = await runner.run_concurrent_tests()
         return ApiTestCaseRunResponse(
             case=case.case,
-            running_results=assert_results,
+            running_results=results,
         )
 
     @staticmethod
@@ -88,6 +88,7 @@ class ApiTestService:
 
         return StepRunResponse(
             case=api_response.case,
+            case_running_results=api_response.running_results,
             step_run_success=res.success,
             step_run_message=res.message,
             step_run_result=res.step_result,
