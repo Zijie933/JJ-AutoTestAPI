@@ -63,7 +63,6 @@ class ApiTestCaseRunResponse(SQLModel):
 
 class StepRunResponse(SQLModel):
     case: Optional[ApiTestCase] = Field(default=None, description="用例")
-    running_results: List[Any]
 
     step_run_success: bool = Field(default=False, description="运行结果")
     step_run_message: str = Field(default=None, description="运行结果说明")

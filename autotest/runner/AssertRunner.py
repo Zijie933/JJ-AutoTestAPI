@@ -51,21 +51,21 @@ class AssertRunner:
         """
         try:
             if operator == AssertOperator.EQ:
-                assert actual == expected, f"断言失败: 路径[{path}] 期望值为 {expected}，但实际值为 {actual}"
+                assert str(actual) == str(expected), f"断言失败: 路径[{path}] 期望值为 {expected}，但实际值为 {actual}"
             elif operator == AssertOperator.NE:
-                assert actual != expected, f"断言失败: 路径[{path}] 期望值不为 {expected}，但实际值为 {actual}"
+                assert str(actual) != str(expected), f"断言失败: 路径[{path}] 期望值不为 {expected}，但实际值为 {actual}"
             elif operator == AssertOperator.GT:
                 AssertRunner._check_numeric(actual, expected)
-                assert actual > expected, f"断言失败: 路径[{path}] 期望值 > {expected}，但实际值为 {actual}"
+                assert float(actual) > float(expected), f"断言失败: 路径[{path}] 期望值 > {expected}，但实际值为 {actual}"
             elif operator == AssertOperator.GE:
                 AssertRunner._check_numeric(actual, expected)
-                assert actual >= expected, f"断言失败: 路径[{path}] 期望值 >= {expected}，但实际值为 {actual}"
+                assert float(actual) >= float(expected), f"断言失败: 路径[{path}] 期望值 >= {expected}，但实际值为 {actual}"
             elif operator == AssertOperator.LT:
                 AssertRunner._check_numeric(actual, expected)
-                assert actual < expected, f"断言失败: 路径[{path}] 期望值 < {expected}，但实际值为 {actual}"
+                assert float(actual) < float(expected), f"断言失败: 路径[{path}] 期望值 < {expected}，但实际值为 {actual}"
             elif operator == AssertOperator.LE:
                 AssertRunner._check_numeric(actual, expected)
-                assert actual <= expected, f"断言失败: 路径[{path}] 期望值 <= {expected}，但实际值为 {actual}"
+                assert float(actual) <= float(expected), f"断言失败: 路径[{path}] 期望值 <= {expected}，但实际值为 {actual}"
             elif operator == AssertOperator.CONTAINS:
                 assert isinstance(actual, (str, list, dict)), f"实际值类型 {type(actual)} 不支持包含操作"
                 assert expected in actual, f"断言失败: 路径[{path}] 期望包含 '{expected}'，但实际为 '{actual}'"

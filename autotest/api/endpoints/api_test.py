@@ -65,7 +65,6 @@ async def run_api_test(*, db: SessionDep, test_in: ApiTestCaseRunParams):
     logger.info(response)
     return Response.success(data=response)
 
-
 @router.post("/steps/run", response_model=Response, description="测试多依赖接口")
 async def run_api_test(*, db: SessionDep, test_in: ApiTestStepsRunParams):
     step_run_model = ApiTestService.init_step(db=db, run_params=test_in)

@@ -40,5 +40,14 @@ def update_user(*, db: Session, user_in: UserUpdate):
     db.refresh(db_user)
     return db_user
 
+def create_jjack(*, db: Session):
+    db_user = User.model_validate(
+        {"username": "jjack", "password": get_password_hash("1234567")}
+    )
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+    return db_user
+
 
 

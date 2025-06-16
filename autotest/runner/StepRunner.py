@@ -33,6 +33,7 @@ class StepRunner:
 
         logger.info("开始执行测试步骤")
         res, success = await self.run_steps(self.steps)
+        logger.info("测试步骤执行结果: {}", res)
         if not success:
             return StepRunnerResult(message="测试步骤执行失败", success=False, end_env=self.env, step_result=res)
         logger.info("测试步骤执行完成，最终环境变量: {}", self.env)
@@ -56,6 +57,7 @@ class StepRunner:
                 current_env.update(extracted)
                 res.append(result)
             else:
+                res.append(result)
                 return res, False
         self.env = current_env
         return res, True
@@ -74,9 +76,14 @@ class StepRunner:
         if not step.case:
             return SingleStepRunnerResult(success=False, message="缺少请求参数")
 
-        run_model = ApiTestCaseRunModel(case=step.case)
+        run_model = ApiTestCaseRunModel(
+            case_id=step.case.id,
+            case=step.case,
+            url=step.case.url,
+            method=step.case.method,
+        )
         runner = ApiTestRunner(run_model)
-        results = await runner.run_test()
+        results = await runner.run_concurrent_tests()
         result: ApiRunnerResult = results[0]
         step_result = SingleStepRunnerResult()
 
@@ -113,10 +120,7 @@ class StepRunner:
 
             try:
                 if source == 'body':
-                    try:
-                        current = json.dumps(response.body, ensure_ascii=False) if response.body else {}
-                    except json.JSONDecodeError:
-                        return extracted
+                    current = dict(response.body)
                 elif source == 'headers':
                     current = dict(response.headers)
                 elif source == 'cookies':

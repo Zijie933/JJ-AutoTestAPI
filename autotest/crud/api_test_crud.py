@@ -2,7 +2,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from autotest.schemas.api_test_schemas import ApiTestCaseCreate, ApiTestCaseUpdate
-from common.models.api_test import ApiTestCase
+from common.models.api_test import ApiTestCase, ApiTestCaseRunModel
 
 
 def save_api_test(*, db: Session, test_in: ApiTestCaseCreate):

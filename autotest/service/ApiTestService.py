@@ -76,7 +76,7 @@ class ApiTestService:
         if not res.success:
             return ApiTestCaseRunResponse(
             case=case.case,
-            running_results=res,
+            running_results=res.step_result,
         )
         case.env = res.end_env
         case.case = replace_vars_in_case(case.case, case.env)
@@ -88,12 +88,12 @@ class ApiTestService:
 
         return StepRunResponse(
             case=api_response.case,
-            running_results=api_response.running_results,
             step_run_success=res.success,
             step_run_message=res.message,
             step_run_result=res.step_result,
             end_env=res.end_env
         )
+
 
 
 

@@ -34,7 +34,14 @@ class ApiTestRunner:
                 limits=httpx.Limits(max_connections=100, max_keepalive_connections=20),
                 timeout=self.run_model.timeout
         ) as client:
-            tasks = [limited_task(client, example) for example in self.run_model.examples or [Example()]]
+            tasks = [limited_task(client, example) for example in self.run_model.examples or [Example(
+                name=self.run_model.case.name,
+                body=self.run_model.case.body,
+                cookies=self.run_model.case.cookies,
+                headers=self.run_model.case.headers,
+                params=self.run_model.case.params,
+                timeout=self.run_model.timeout
+            )]]
             return await asyncio.gather(*tasks)
 
     async def run_single_test(self, client: httpx.AsyncClient, example: Example) -> ApiRunnerResult:
@@ -48,14 +55,14 @@ class ApiTestRunner:
         result = ApiRunnerResult()
 
         try:
-            if self.run_model.case_id:
+            if example:
                 request_obj = client.build_request(
                     url=self.run_model.case.url,
                     method=self.run_model.case.method.upper(),
                     cookies=json.loads(example.cookies) if example.cookies else {},
                     headers=json.loads(example.headers) if example.headers else {},
                     params=json.loads(example.params) if example.params else {},
-                    data=example.body,
+                    json=json.loads(example.body) if example.body else {},
                     timeout=example.timeout if example.timeout else self.run_model.timeout
                 )
             else:
@@ -65,7 +72,7 @@ class ApiTestRunner:
                     cookies=json.loads(self.run_model.case.cookies) if self.run_model.case and self.run_model.case.cookies else {},
                     headers=json.loads(self.run_model.case.headers) if self.run_model.case and self.run_model.case.headers else {},
                     params=json.loads(self.run_model.case.params) if self.run_model.case and self.run_model.case.params else {},
-                    data=self.run_model.case.body if self.run_model.case and self.run_model.case.body else None,
+                    json=json.loads(self.run_model.case.body) if self.run_model.case and self.run_model.case.body else {},
                     timeout=self.run_model.timeout if self.run_model.timeout is not None else 10,
                 )
             response_obj: Response = await client.send(request_obj)

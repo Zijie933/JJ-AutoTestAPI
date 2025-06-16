@@ -10,7 +10,7 @@ from common.core.exceptions import TokenInvalidException
 
 def init_middleware(app: FastAPI):
     # 注册 token 拦截器
-    # token_interceptor(app)
+    token_interceptor(app)
 
     # 注册 CORS 中间件
     app.add_middleware(
@@ -27,6 +27,8 @@ def token_interceptor(app: FastAPI):
     """
 
     whitelist = settings.WHITE_LIST
+    enable_token_verify = settings.ENABLE_TOKEN_VERIFY
+
     @app.middleware("http")
     async def intercept(request: Request, call_next):
         try:
@@ -41,24 +43,36 @@ def token_interceptor(app: FastAPI):
             payload = payloadLocal.payload
             logger.info(f"中间件开始，当前payload：{payload}")
 
-            if payload:
-                exp = payload.get("exp")
-                if exp is None or exp < int(datetime.now(timezone.utc).timestamp()):
-                    payloadLocal.clear()
-                    payload = None
+            # 如果开启了 token 校验
+            if enable_token_verify:
+                if payload:
+                    exp = payload.get("exp")
+                    if exp is None or exp < int(datetime.now(timezone.utc).timestamp()):
+                        payloadLocal.clear()
+                        payload = None
 
-            if not payload:
+                if not payload:
+                    token = request.headers.get("Authorization")
+                    logger.info(f"请求头中的Authorization字段：{token}")
+                    if not token:
+                        logger.error("请求头中缺少Authorization，抛出Token无效异常")
+                        raise TokenInvalidException(ErrorMessages.TOKEN_INVALID)
+                    try:
+                        payloadLocal.clear()
+                        payloadLocal.save_by_token(token)
+                    except TokenInvalidException as e:
+                        logger.error(f"Token无效异常，异常信息：{e}")
+                        raise e
+            else:
+                # 不进行 token 校验，但仍尝试提取并保存 token
                 token = request.headers.get("Authorization")
-                logger.info(f"请求头中的Authorization字段：{token}")
-                if not token:
-                    logger.error("请求头中缺少Authorization，抛出Token无效异常")
-                    raise TokenInvalidException(ErrorMessages.TOKEN_INVALID)
-                try:
-                    payloadLocal.clear()
-                    payloadLocal.save_by_token(token)
-                except TokenInvalidException as e:
-                    logger.error(f"Token无效异常，异常信息：{e}")
-                    raise e
+                logger.info(f"请求头中的Authorization字段（不校验）：{token}")
+                if token:
+                    try:
+                        payloadLocal.clear()
+                        payloadLocal.save_by_token(token)  # 仅保存 payload，不抛异常
+                    except TokenInvalidException:
+                        logger.warning("解析 token 失败，忽略异常")
 
             response = await call_next(request)
             logger.info("中间件处理完成，继续执行后续请求")

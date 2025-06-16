@@ -17,6 +17,8 @@ class Settings(BaseSettings):
         "/docs",
         "/openapi.json"
     ]
+    # 暂时取消token校验
+    ENABLE_TOKEN_VERIFY: bool = False
 
     SECRET_KEY: str = os.getenv("SECRET_KEY", "jack_default_key_1")
     ALGORITHM: str = "HS256"
